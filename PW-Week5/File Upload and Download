@@ -1,0 +1,130 @@
+import { test, expect } from '@playwright/test';
+import path from "path";
+
+//Classroom activity 1 on Upload
+test('file upload', async ({ page }) => {
+    await page.goto("https://www.naukri.com/registration/createaccount")
+    await page.locator('//h2[text()="I\'m experienced"]').click()
+    const fileUpload = page.locator("//input[@id='resumeUpload']")
+    await fileUpload.setInputFiles('Utils/Playwright Alerts.pdf')
+    await page.waitForTimeout(2000)
+})
+
+//Classromm Activit 2 on Download
+test('Download', async ({ page }) => {
+    await page.goto("https://the-internet.herokuapp.com/download")
+    const download = page.waitForEvent('download')
+    await page.locator("//a[text()='5555.png']").click()
+    const downloadPromise = await download
+    await downloadPromise.saveAs('Utils/' + downloadPromise.suggestedFilename())
+    expect(downloadPromise.suggestedFilename()).toBe('5555.png')
+})
+
+
+//Homework File upload and Download - Using Input Tag (setInputFiles)
+test.only('HW File upload and Download Relative Path', async ({ page }) => {
+    await page.goto('https://the-internet.herokuapp.com/upload')
+    //Single File upload Using Relative path
+    const fileUpload1 = page.locator("input[id='file-upload']")
+    await fileUpload1.setInputFiles('Utils/test-upload.txt')
+    await page.waitForTimeout(2000)
+    const fileName = await fileUpload1.inputValue()
+    expect(fileName).toContain('test-upload.txt')
+})
+
+test('HW File upload and Download Absolute Path', async ({ page }) => {
+    await page.goto('https://the-internet.herokuapp.com/upload')
+    //Single File upload using Absolute Path
+    const fileUpload2 = page.locator("input[id='file-upload']")
+    await fileUpload2.setInputFiles(path.join(__dirname, '../Utils/test-upload.txt'))
+    await page.waitForTimeout(2000)
+    const fileName1 = await fileUpload2.inputValue()
+    expect(fileName1).toContain('test-upload.txt')
+})
+
+//Homework File upload and Download - Using Event Listener
+test('HW Using Event Listener Relative Path', async ({ page }) => {
+    await page.goto("https://the-internet.herokuapp.com/upload")
+    const fileUpload3 = page.waitForEvent('filechooser')
+    await page.locator("div[id='drag-drop-upload']").click()
+    const fileUploadPromise = await fileUpload3
+    //using Relative Path For Multiple Files
+    await fileUploadPromise.setFiles(["Utils/test-upload.txt", "Utils/hello.json"])
+    await page.waitForTimeout(2000)
+    const fileNames = await page.locator("//div[@class='dz-filename']").allTextContents()
+    console.log(fileNames)
+    expect(fileNames).toContain('test-upload.txt')
+    expect(fileNames).toContain('hello.json')
+})
+
+test('HW Using Event Listener Absolute Path', async ({ page }) => {
+    await page.goto("https://the-internet.herokuapp.com/upload")
+    const fileUpload3 = page.waitForEvent('filechooser')
+    await page.locator("div[id='drag-drop-upload']").click()
+    const fileUploadPromise = await fileUpload3
+    //using Absolute Path for Multiple Files
+    await fileUploadPromise.setFiles([path.join(__dirname, '../../Utils/test-upload.txt'),
+    path.join(__dirname, '../../Utils/hello.json')])
+    await page.waitForTimeout(2000)
+    //write assertion
+    const fileNames1 = await page.locator("//div[@class='dz-filename']").allTextContents()
+    console.log(fileNames1)
+    expect(fileNames1).toContain('test-upload.txt')
+    expect(fileNames1).toContain('hello.json')
+
+})
+
+//npx playwright test FileUploadDownload.spec.ts
+
+//Homework File Download
+test('HW File Download Relative Path Suggested FN', async ({ page }) => {
+    await page.goto("https://the-internet.herokuapp.com/download")
+    const fileDownload = page.waitForEvent('download')
+    await page.locator("//a[text()='hello.json']").click()
+    const fileDownloadPromise = await fileDownload
+    //using Relative Path
+    await fileDownloadPromise.saveAs('Data/' + fileDownloadPromise.suggestedFilename())
+    //write assertion
+    expect(fileDownloadPromise.suggestedFilename()).toBe('hello.json')
+})
+
+
+test('HW File Download Absolute Path User Defined FN', async ({ page }) => {
+    await page.goto("https://the-internet.herokuapp.com/download")
+    const fileDownload = page.waitForEvent('download')
+    await page.locator("//a[text()='some-file.txt']").click()
+    const fileDownloadPromise = await fileDownload
+    //using Absolute Path and assertion
+    const userdefname = 'UserDef.txt'
+    const savedFile = path.join(__dirname, '../Data/UserDef.txt')
+    await fileDownloadPromise.saveAs(savedFile)
+    expect(path.basename(savedFile)).toBe(userdefname)
+    
+})
+
+
+//Home Work File Upload in Salesforce
+test.use({
+    storageState: 'Data/login_SF.json'
+}),
+    test('File Upload Salesforce', async ({ page }) => {
+        await page.goto("https://testleaf.lightning.force.com/lightning/page/home")
+        await page.locator("//span[text()='App Launcher']").click()
+        await page.getByRole('button', { name: 'View All Applications' }).click()
+        await page.getByRole('combobox', { name: 'Search apps or items...' }).fill('Accounts')
+        await page.locator("//mark[text()='Accounts']").click()
+        await page.locator("//div[@title='New']").click()
+        await page.getByRole('textbox', { name: 'Account Name' }).fill('Blueberry')
+        //select warm from the rating dropdown-not found in the app
+        await page.getByRole('combobox', { name: 'Type' }).click()
+        await page.locator("(//span[text()='Prospect'])[1]").click()
+        await page.getByRole("combobox", { name: 'Industry' }).click()
+        await page.locator("(//span[text()='Banking'])[1]").click()
+        await page.getByRole('button', { name: 'Save' }).click()
+        await expect(page.locator("//div[text()='Blueberry']")).toContainText('Blueberry')
+        const upload = page.locator("(//input[@type='file'])[1]")
+        await upload.setInputFiles('Utils/hello.json')
+        await page.locator("//span[text()='Done']").click()
+        expect(page.locator("//span[text()='1 file was added to the Account.']")).
+            toHaveText('1 file was added to the Account.')
+    })
