@@ -1,0 +1,133 @@
+import { test } from '@playwright/test';
+
+//Classroom Activity 1 : Login Salesforce with 2 sets of Data
+import login from '../../Data/salesforce.json'
+
+for(let value of login) {
+test(`learn to read json file ${value.TestCaseID}` , async({page}) => {
+    await page.goto('https://login.salesforce.com')
+    await page.getByText('Username', {exact:true}).fill(value.UserName)
+    await page.getByRole('button',{name:'Log In'}).click()
+    await page.getByLabel('Password',{exact : true}).fill(value.password)
+    await page.getByRole('button',{name:'Log In'}).click()
+    await page.waitForTimeout(2000)
+})    
+}
+
+//Classroom Activity 2 : Read Data from CSV
+import {parse} from 'csv-parse/sync'
+import fs from 'fs'
+let csvData = fs.readFileSync('Utils/leafTaps.csv', 'utf-8')
+let csvValue :any[] = parse(csvData , {skip_empty_lines : true , columns : true })
+console.log(csvValue)
+for(let value1 of csvValue ){
+test(`Leaftaps login Data para ${value1.tcId}` , async({page}) => {
+    await page.goto('https://leaftaps.com/opentaps/control/main')
+    await page.locator('#username').fill(value1.userName)
+    await page.locator('#password').fill(value1.password)
+    await page.locator("//input[@value='Login']").click()
+})
+}
+
+//npx playwright test jsonFile.spec.ts
+
+
+Homework CSV File:
+tcId,username,password,companyName,firstName,lastName,source,marketingCampaign,GeneralServices,currency,country,state
+TC001,democsr2,crmsfa,ABC Technologies,Blue,Berry,Direct Mail,DEMO_MKTG_CAMP,6,INR,India,TAMILNADU
+
+Homework Json File:
+{
+    "tcId": "TC001",
+    "username": "democsr2",
+    "password": "crmsfa",
+    "companyName": "ABC Technologies",
+    "firstName": "Blue",
+    "lastName": "Berry",
+    "source": "Direct Mail",
+    "marketingCampaign": "DEMO_MKTG_CAMP",
+    "GeneralServices": 6,
+    "currency": "INR",
+    "country": "India",
+    "state": "TAMILNADU"
+}
+
+
+//HomeWork : Data Parameterization using json
+import lead from '../../Data/HW.json'
+test(`HW Data para json ${lead.tcId}` , async({page}) => {
+    await page.goto('https://leaftaps.com/opentaps/control/main')
+    await page.locator('#username').fill(lead.username)
+    await page.locator('#password').fill(lead.password)
+    await page.locator("//input[@value='Login']").click()
+    await page.locator("//div[@for='crmsfa']").click()
+    await page.locator("//a[text()='Leads']").click()
+    await page.locator("//a[text()='Create Lead']").click()
+    await page.locator("//input[@id='createLeadForm_companyName']").fill(lead.companyName)
+    await page.locator("//input[@id='createLeadForm_firstName']").fill(lead.firstName)
+    await page.locator("//input[@id='createLeadForm_lastName']").fill(lead.lastName)
+    await page.locator("//select[@id='createLeadForm_dataSourceId']").selectOption({label : lead.source})
+    await page.locator("//select[@id='createLeadForm_marketingCampaignId']").selectOption({value : lead.marketingCampaign})
+    const dropDown = page.locator("//select[@id='createLeadForm_marketingCampaignId']")
+    const dropDownoptions = dropDown.locator('option')
+    const count = await dropDownoptions.count()
+    console.log("The count is : " , count)
+    for (let i= 0; i < count ; i++){
+        console.log(await dropDownoptions.nth(i).innerText())
+    }
+    await page.locator("//select[@id='createLeadForm_industryEnumId']").selectOption({index : lead.GeneralServices})
+    await page.locator("//select[@id='createLeadForm_currencyUomId']").selectOption({value : lead.currency})
+    await page.locator("//select[@id='createLeadForm_generalCountryGeoId']").selectOption({label : lead.country})
+    await page.locator("//select[@id='createLeadForm_generalStateProvinceGeoId']").selectOption({label : lead.state})
+    const stateValue =  page.locator("//select[@id='createLeadForm_generalStateProvinceGeoId']")
+    const statevalueoptions = stateValue.locator('option')
+    const stateCount = await statevalueoptions.count()
+    console.log("The count of State is : " , stateCount)
+    for(let j=0; j< stateCount ; j++){
+        console.log(await statevalueoptions.nth(j).innerText())
+    }
+    await page.locator("//input[@value='Create Lead']").click()
+})
+
+
+
+//HomeWork : Data Parameterization using csv
+//import {parse} from 'csv-parse/sync'
+//import fs from 'fs'
+let csvFile = fs.readFileSync('Utils/HW.csv', 'utf-8')
+let csvFileValue : any[] = parse(csvFile,{skip_empty_lines:true,columns:true})
+console.log(csvFileValue)
+for(let value3 of csvFileValue ){
+test.only(`HW Data para csv ${value3.tcId}` , async({page}) => {
+    await page.goto('https://leaftaps.com/opentaps/control/main')
+    await page.locator('#username').fill(value3.username)
+    await page.locator('#password').fill(value3.password)
+    await page.locator("//input[@value='Login']").click()
+    await page.locator("//div[@for='crmsfa']").click()
+    await page.locator("//a[text()='Leads']").click()
+    await page.locator("//a[text()='Create Lead']").click()
+    await page.locator("//input[@id='createLeadForm_companyName']").fill(value3.companyName)
+    await page.locator("//input[@id='createLeadForm_firstName']").fill(value3.firstName)
+    await page.locator("//input[@id='createLeadForm_lastName']").fill(value3.lastName)
+    await page.locator("//select[@id='createLeadForm_dataSourceId']").selectOption({label : value3.source})
+    await page.locator("//select[@id='createLeadForm_marketingCampaignId']").selectOption({value : value3.marketingCampaign})
+    const dropDown = page.locator("//select[@id='createLeadForm_marketingCampaignId']")
+    const dropDownoptions = dropDown.locator('option')
+    const count = await dropDownoptions.count()
+    console.log("The count is : " , count)
+    for (let i= 0; i < count ; i++){
+        console.log(await dropDownoptions.nth(i).innerText())
+    }
+    await page.locator("//select[@id='createLeadForm_industryEnumId']").selectOption({index : Number(value3.GeneralServices)})
+    await page.locator("//select[@id='createLeadForm_currencyUomId']").selectOption({value : value3.currency})
+    await page.locator("//select[@id='createLeadForm_generalCountryGeoId']").selectOption({label : value3.country})
+    await page.locator("//select[@id='createLeadForm_generalStateProvinceGeoId']").selectOption({label : value3.state})
+    const stateValue =  page.locator("//select[@id='createLeadForm_generalStateProvinceGeoId']")
+    const statevalueoptions = stateValue.locator('option')
+    const stateCount = await statevalueoptions.count()
+    console.log("The count of State is : " , stateCount)
+    for(let j=0; j< stateCount ; j++){
+        console.log(await statevalueoptions.nth(j).innerText())
+    }
+    await page.locator("//input[@value='Create Lead']").click()
+})}
